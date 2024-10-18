@@ -20,13 +20,28 @@ public class Main {
                     writePost(scanner);
                     break;
                 case "search":
-                    viewPost(scanner);
+                    try {
+                        viewPost(scanner);
+                    } catch (PostNotFoundException e) {
+                        System.out.println(e.getMessage());
+                    }
                     break;
                 case "delete":
-                    deletePost(scanner);
+                    try {
+                        deletePost(scanner);
+                    } catch (PostNotFoundException e) {
+                        System.out.println(e.getMessage());
+                    }
                     break;
                 case "modify":
-                    modifyPost(scanner);
+                    try {
+                        modifyPost(scanner);
+                    } catch (PostNotFoundException e) {
+                        System.out.println(e.getMessage());
+                    }
+                    break;
+                case "list":
+                    listPosts();
                     break;
                 case "end":
                     System.out.println("The program will be terminated.");
@@ -51,10 +66,9 @@ public class Main {
     }
 
     // 게시글 조회
-    private static void viewPost(Scanner scanner) {
+    private static void viewPost(Scanner scanner) throws PostNotFoundException {
         if (posts.isEmpty()) {
-            System.out.println("No posts have been created.");
-            return;
+            throw new PostNotFoundException("No posts have been created.");
         }
 
         System.out.print("Enter the post number to view:");
@@ -66,15 +80,14 @@ public class Main {
             System.out.println("title: " + post.getTitle());
             System.out.println("content: " + post.getContent());
         } else {
-            System.out.println("The post for that number does not exist.");
+//            throw new PostNotFoundException("The post for that number does not exist.");
         }
     }
 
     // 게시글 삭제
-    private static void deletePost(Scanner scanner) {
+    private static void deletePost(Scanner scanner) throws PostNotFoundException {
         if (posts.isEmpty()) {
-            System.out.println("no posts to delete.");
-            return;
+            throw new PostNotFoundException("no posts to delete.");
         }
 
         System.out.print("Enter the post number you want to delete:");
@@ -86,15 +99,14 @@ public class Main {
             posts.remove(post);
             System.out.println("post has been deleted.");
         } else {
-            System.out.println("The post for that number does not exist.");
+            throw new PostNotFoundException ("The post for that number does not exist.");
         }
     }
 
     // 게시글 수정
-    private static void modifyPost(Scanner scanner) {
+    private static void modifyPost(Scanner scanner) throws PostNotFoundException {
         if (posts.isEmpty()) {
-            System.out.println("no posts to modify.");
-            return;
+            throw new PostNotFoundException("no posts to modify.");
         }
 
         System.out.print("enter the post number you want to modify: ");
@@ -112,7 +124,20 @@ public class Main {
             post.setContent(newContent);
             System.out.println("The post has been modified.");
         } else {
-            System.out.println("The post for that number does not exist.");
+            throw new PostNotFoundException("The post for that number does not exist.");
+        }
+    }
+    private static void listPosts() {
+        if (posts.isEmpty()) {
+            System.out.println("No posts have been created.");
+        } else {
+            System.out.println("List of posts::");
+            for (Post post : posts) {
+                System.out.println(post.getId() + "post");
+                System.out.println("title: " + post.getTitle());
+                System.out.println("content: " + post.getContent());
+                System.out.println();  // 빈 줄 추가
+            }
         }
     }
     // 게시글 ID로 게시글 찾기
