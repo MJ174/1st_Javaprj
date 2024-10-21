@@ -1,3 +1,5 @@
+package src.board;
+
 public class Post {
     private int id;
     private String title;
