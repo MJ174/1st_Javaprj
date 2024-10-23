@@ -10,13 +10,15 @@ public class Main {
     private static Map<String, String> parameters = new HashMap<>();
     private static List<Board> boards = new ArrayList<>();
     private static List<Post> posts = new ArrayList<>(); // 게시물 리스트
+    private static List<Account> accounts = new ArrayList<>(); // 회원 리스트
+    private static Account loggedInAccount = null; // 현재 로그인된 계정
 
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
         String command;
 
         while (true) {
-            System.out.print("손님 > ");
+            printPrompt();
             command = scanner.nextLine();
 
             try {
@@ -24,6 +26,14 @@ public class Main {
             } catch (InvalidURLException e) {
                 System.out.println(e.getMessage());
             }
+        }
+    }
+
+    private static void printPrompt() {
+        if (loggedInAccount != null) {
+            System.out.print(loggedInAccount.getUsername() + " > ");
+        } else {
+            System.out.print("손님 > ");
         }
     }
 
@@ -41,7 +51,7 @@ public class Main {
             throw new InvalidURLException("URL 경로가 너무 짧습니다.");
         }
 
-        String category = pathParts[1];  // posts, boards 구분
+        String category = pathParts[1];  // accounts, posts, boards 구분
         String action = pathParts[2];    // 기능
 
         if (parts.length > 1) {
@@ -51,11 +61,14 @@ public class Main {
 
         // URL 경로에 따라 동작 처리
         switch (category) {
-            case "게시글":
-                handlePostAction(action);
+            case "accounts":
+                handleAccountAction(action);
                 break;
             case "boards":
                 handleBoardAction(action);
+                break;
+            case "posts":
+                handlePostAction(action);
                 break;
             default:
                 throw new InvalidURLException("알 수 없는 구분: " + category);
@@ -75,6 +88,167 @@ public class Main {
         }
     }
 
+    // 회원 관련 URL 처리
+    private static void handleAccountAction(String action) throws InvalidURLException {
+        switch (action) {
+            case "signup":
+                signUp();
+                break;
+            case "signin":
+                signIn();
+                break;
+            case "signout":
+                signOut();
+                break;
+            case "detail":
+                viewAccountDetail();
+                break;
+            case "edit":
+                editAccount();
+                break;
+            case "remove":
+                removeAccount();
+                break;
+            default:
+                throw new InvalidURLException("알 수 없는 회원 기능: " + action);
+        }
+    }
+
+    // 회원가입
+    private static void signUp() {
+        String username = parameters.get("username");
+        String password = parameters.get("password");
+        String name = parameters.get("name");
+        String email = parameters.get("email");
+
+        if (username == null || password == null || name == null || email == null) {
+            System.out.println("모든 파라미터를 입력해야 합니다.");
+            return;
+        }
+
+        Account account = new Account(username, password, name, email);
+        accounts.add(account);
+        System.out.println("회원 '" + username + "'이(가) 가입되었습니다.");
+    }
+
+    // 로그인
+    private static void signIn() {
+        if (loggedInAccount != null) {
+            System.out.println("이미 로그인 되어 있습니다. 로그아웃 후 다시 시도하세요.");
+            return;
+        }
+
+        String username = parameters.get("username");
+        String password = parameters.get("password");
+
+        Account account = findAccountByUsername(username);
+        if (account == null || !account.getPassword().equals(password)) {
+            System.out.println("잘못된 계정 정보입니다.");
+            return;
+        }
+
+        loggedInAccount = account;
+        System.out.println(username + "님이 로그인하셨습니다.");
+    }
+
+    // 로그아웃
+    private static void signOut() {
+        if (loggedInAccount == null) {
+            System.out.println("로그인 되어 있지 않습니다.");
+            return;
+        }
+
+        System.out.println(loggedInAccount.getUsername() + "님이 로그아웃하셨습니다.");
+        loggedInAccount = null;
+    }
+
+    // 회원 상세 정보 보기
+    private static void viewAccountDetail() {
+        String accountIdStr = parameters.get("accountId");
+
+        if (accountIdStr == null) {
+            System.out.println("accountId가 필요합니다.");
+            return;
+        }
+
+        int accountId = Integer.parseInt(accountIdStr);
+        Account account = findAccountById(accountId);
+
+        if (account == null) {
+            System.out.println(accountId + "번 회원을 찾을 수 없습니다.");
+        } else {
+            System.out.println(account);
+        }
+    }
+
+    // 회원 정보 수정 (비밀번호 및 이메일만)
+    private static void editAccount() {
+        String accountIdStr = parameters.get("accountId");
+        String newPassword = parameters.get("password");
+        String newEmail = parameters.get("email");
+
+        if (accountIdStr == null || newPassword == null || newEmail == null) {
+            System.out.println("모든 파라미터를 입력하세요.");
+            return;
+        }
+
+        int accountId = Integer.parseInt(accountIdStr);
+        Account account = findAccountById(accountId);
+
+        if (account == null) {
+            System.out.println(accountId + "번 회원을 찾을 수 없습니다.");
+            return;
+        }
+
+        account.setPassword(newPassword);
+        account.setEmail(newEmail);
+        System.out.println(accountId + "번 회원의 정보가 수정되었습니다.");
+    }
+
+    // 회원 탈퇴 (로그아웃 처리 후 삭제)
+    private static void removeAccount() {
+        String accountIdStr = parameters.get("accountId");
+
+        if (accountIdStr == null) {
+            System.out.println("accountId가 필요합니다.");
+            return;
+        }
+
+        int accountId = Integer.parseInt(accountIdStr);
+        Account account = findAccountById(accountId);
+
+        if (account == null) {
+            System.out.println(accountId + "번 회원을 찾을 수 없습니다.");
+            return;
+        }
+
+        if (loggedInAccount != null && loggedInAccount.getId() == account.getId()) {
+            signOut(); // 탈퇴 전에 로그아웃
+        }
+
+        accounts.remove(account);
+        System.out.println(accountId + "번 회원이 삭제되었습니다.");
+    }
+
+    // 회원 찾기 by ID
+    private static Account findAccountById(int id) {
+        for (Account account : accounts) {
+            if (account.getId() == id) {
+                return account;
+            }
+        }
+        return null;
+    }
+
+    // 회원 찾기 by username
+    private static Account findAccountByUsername(String username) {
+        for (Account account : accounts) {
+            if (account.getUsername().equals(username)) {
+                return account;
+            }
+        }
+        return null;
+    }
     // 게시판 관련 URL 처리
     private static void handleBoardAction(String action) throws InvalidURLException {
         switch (action) {
