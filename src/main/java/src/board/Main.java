@@ -249,6 +249,7 @@ public class Main {
         }
         return null;
     }
+
     // 게시판 관련 URL 처리
     private static void handleBoardAction(String action) throws InvalidURLException {
         switch (action) {
@@ -271,13 +272,16 @@ public class Main {
 
     // 게시판 추가
     private static void addBoard() {
-        String boardName = parameters.get("name");
+        String boardName = parameters.get("boardName");
         if (boardName == null) {
             System.out.println("게시판 이름을 입력하세요.");
-        } else {
-            boards.add(new Board(boardName));
-            System.out.println("게시판 '" + boardName + "'이(가) 추가되었습니다.");
+            return;
         }
+
+        String author = (loggedInAccount != null) ? loggedInAccount.getName() : "비회원";
+        Board board = new Board(boardName, author);
+        boards.add(board);
+        System.out.println("게시판 '" + boardName + "'이(가) 생성되었습니다. 작성자: " + author);
     }
 
     // 게시판 수정
@@ -388,17 +392,22 @@ public class Main {
             System.out.println("파라미터 부족: 게시판 이름, 제목, 내용을 입력하세요.");
             return;
         }
-
+        
+        // 게시판
         Board board = findBoardByName(boardName);
         if (board == null) {
             System.out.println("게시판 '" + boardName + "'을(를) 찾을 수 없습니다.");
             return;
         }
-
-        Post post = new Post(title, content, board);
+        // 작성자 설정 (로그인된 사용자가 있으면 그 이름을, 없으면 '비회원')
+        String author = (loggedInAccount != null) ? loggedInAccount.getName() : "비회원";
+        // 게시물 생성
+        Post post = new Post(title, content, board, author);
         posts.add(post);
+        // 게시판에 게시물 추가
         board.addPost(post);
-        System.out.println("게시물 '" + title + "'이(가) 게시판 '" + boardName + "'에 추가되었습니다.");
+        // 게시물 작성 완료 메시지
+        System.out.println("게시물 '" + title + "'이(가) 게시판 '" + boardName + "'에 작성되었습니다. 작성자: " + author);
     }
 
     // 게시물 수정
