@@ -392,7 +392,7 @@ public class Main {
             System.out.println("파라미터 부족: 게시판 이름, 제목, 내용을 입력하세요.");
             return;
         }
-        
+
         // 게시판
         Board board = findBoardByName(boardName);
         if (board == null) {
@@ -434,7 +434,6 @@ public class Main {
         System.out.println(postId + "번 게시물이 수정되었습니다.");
     }
 
-
     // 게시물 삭제
     private static void removePost() {
         String postIdStr = parameters.get("postId");
@@ -456,7 +455,6 @@ public class Main {
         post.getBoard().removePost(post);
         System.out.println(postId + "번 게시물이 삭제되었습니다.");
     }
-
 
     // 게시물 조회
     private static void viewPost() {
